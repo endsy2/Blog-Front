@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import ModelEditProfile from '../../Utils/ModelEditProfile';
 import { useEffect, useState } from 'react';
 import { getUserInfo } from '../../Fetch-Data/FetchAPI';
@@ -10,53 +10,64 @@ const ProfileHeader = () => {
   const [username, setUserName] = useState('');
   const [email, setEmail] = useState('');
   const [profile, setProfile] = useState('');
+  const navigate = useNavigate();
 
   const handleInfo = async () => {
     try {
       const res = await getUserInfo();
       setUserName(res.data.data[0].username);
       setEmail(res.data.data[0].email);
-      const profilefetch=`http://localhost:3000/${res.data.data[0].profile}`
-      setProfile(profilefetch);
-      console.log('username',username);
-      
+      const profileUrl = `http://localhost:3000/${res.data.data[0].profile}`;
+      setProfile(profileUrl);
     } catch (err) {
-      setError('Failed to fetch user info fetch. Please try again later.');
+      setError('Failed to fetch user info. Please try again later.');
       console.error(err);
     }
   };
-  console.log(profile);
-  
+
+  const handleLogout = () => {
+    localStorage.removeItem('Access-token');
+    navigate('/auth/login');
+  };
+
   useEffect(() => {
     handleInfo();
   }, []);
 
-  // If the profile image is not available, use a default image
-
   return (
-    <section className="w-[1350px]">
-      <div key={username} className="flex justify-between gap-20 items-center">
-        <div className='flex items-center gap-10'>
+    <section className="w-full max-w-[1350px] mx-auto">
+      <div className="flex justify-between items-center gap-20">
+        <div className="flex items-center gap-10">
           <div>
-            <img src={profile} alt={username} className="w-48 rounded-full h-48 my-16" />
+            <img
+              src={profile || 'default-profile.png'}
+              alt={username || 'User Profile'}
+              className="w-48 h-48 my-16 rounded-full"
+            />
           </div>
           <div className="flex flex-col justify-center items-start p-10 bg-lightGray rounded-xl">
-            <p className="green-text">Name: {username}</p>
-            <p className="green-text">Email: {email}</p>
+            <p className="text-green-700">Name: {username}</p>
+            <p className="text-green-700">Email: {email}</p>
           </div>
         </div>
-        <div className='flex'>
-          <Link className='green-btn ml-64'  onClick={() => setShowModelCreate(true)}>Create Blog</Link>
-          <Link className='green-btn ml-10'  onClick={() => setShowModelEdit(true)}>Edit Profile</Link>
+        <div className="flex">
+          <button className="green-btn ml-10 hover:bg-green-700" onClick={() => setShowModelCreate(true)}>
+            Create Blog
+          </button>
+          <button className="green-btn ml-10 hover:bg-green-700" onClick={() => setShowModelEdit(true)}>
+            Edit Profile
+          </button>
+          <button className="green-btn ml-10 bg-red-600 hover:bg-red-800" onClick={handleLogout}>
+            Log Out
+          </button>
         </div>
       </div>
       
-      <ModelEditProfile id='edit-profile' isVisible={showModelEdit} onClose={() => setShowModelEdit(false)} />
-      <ModelEditProfile id='create' isVisible={showModelCreate} onClose={() => setShowModelCreate(false)} />
-      <p>{error}</p>
+      <ModelEditProfile id="edit-profile" isVisible={showModelEdit} onClose={() => setShowModelEdit(false)} />
+      <ModelEditProfile id="create" isVisible={showModelCreate} onClose={() => setShowModelCreate(false)} />
+      {error && <p className="text-red-500">{error}</p>}
     </section>
   );
 };
-
 
 export default ProfileHeader;
